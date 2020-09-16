@@ -41,15 +41,12 @@ class App(PluginApp):
         self.parent = parent
         self.main_app = main_app
         self.version = ''
+        self.logger = self.main_app.logger
 
         self.info_popup = self.main_app.info_popup
         self.plugin_directory = os.path.dirname(os.path.abspath(__file__))
         self.root_directory = self.main_app.root_directory
         self.log_directory = self.main_app.log_directory
-        # self.mapping_files_directory = self.main_app.mapping_files_directory
-
-    # def get_user_settings(self):
-    #     return [('basic', 'test')]
 
     def startup(self):
         """
@@ -58,24 +55,7 @@ class App(PluginApp):
         if not os.path.exists(self.log_directory):
             os.makedirs(self.log_directory)
 
-        self.logger = loglib.get_logger(name='Algaware',
-                                        logfiles=[dict(level='DEBUG',
-                                                       file_path=os.path.join(self.log_directory,
-                                                                              'algaware_debug.log')),
-                                                  dict(level='WARNING',
-                                                       file_path=os.path.join(self.log_directory,
-                                                                              'algaware_warning.log')),
-                                                  dict(level='ERROR',
-                                                       file_path=os.path.join(self.log_directory,
-                                                                              'algaware_error.log'))
-                                                  ])
-
         self.paths = core.Paths(self.plugin_directory)
-
-        # Load settings files object
-        # self.settings_files = core.SettingsFiles(self.paths.directory_settings_files)
-
-        # self.settings = self.main_app.settings
 
         self.user_manager = self.main_app.user_manager
         self.user = self.main_app.user
@@ -108,51 +88,18 @@ class App(PluginApp):
 
     def _set_frame(self):
         self.frame_top = tk.Frame(self, bg='red')
-        self.frame_mid = tk.Frame(self, bg='green')
-        self.frame_bot = tk.Frame(self, bg='blue')
 
         # Grid
         self.frame_top.grid(row=0, column=0, sticky="nsew")
-        self.frame_mid.grid(row=1, column=0, sticky="nsew")
-        self.frame_bot.grid(row=2, column=0, sticky="nsew")
         
         # Gridconfigure
-        tkw.grid_configure(self, nr_rows=3, r0=100, r1=5, r2=1)
+        tkw.grid_configure(self, nr_rows=1, nr_columns=1)
 
         # Frame top
         # Create container in that will hold (show) all frames
         self.container = tk.Frame(self.frame_top)
         self.container.grid(row=0, column=0, sticky="nsew") 
         tkw.grid_configure(self.frame_top)
-
-        # Frame mid
-        self.frame_add = tk.LabelFrame(self.frame_mid)
-        self.frame_loaded = tk.LabelFrame(self.frame_mid, text='Loaded files')
-        
-        # Grid
-        self.frame_add.grid(row=0, column=0, sticky="nsew")
-        self.frame_loaded.grid(row=0, column=1, sticky="nsew")
-        
-        # Gridconfigure 
-        tkw.grid_configure(self.frame_mid, nr_columns=2)
-
-        # Frame bot
-        self._set_frame_bot()
-
-    def _set_frame_bot(self):
-        self.frame_info = tk.Frame(self.frame_bot)
-        self.frame_info.grid(row=0, column=0, sticky="nsew")
-
-        # ttk.Separator(self.frame_bot, orient=tk.VERTICAL).grid(row=0, column=1, sticky='ns')
-
-        self.frame_progress = tk.Frame(self.frame_bot)
-        # self.frame_progress.grid(row=0, column=2, sticky="nsew")
-        self.progress_widget = tkw.ProgressbarWidget(self.frame_progress, sticky='nsew')
-
-        self.info_widget = tkw.LabelFrameLabel(self.frame_info, pack=False)
-
-        tkw.grid_configure(self.frame_info)
-        tkw.grid_configure(self.frame_bot)
 
     def startup_pages(self):
         # Tuple that store all pages
