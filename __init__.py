@@ -7,8 +7,8 @@ from .app import App
 
 INFO = dict(title='Algaware page',
             users_directory='users',
-            sub_pages=[dict(name='PageStart',
-                            title='Start')],
+            sub_pages=[dict(name='PageAlgaware',
+                            title='Algaware main')],
             user_page_class='PageUser')  # Must match name in ALL_PAGES in main app
 
 USER_SETTINGS = [('basic', 'test3')]
