@@ -467,7 +467,7 @@ class PageAlgaware(BaseGUI, tk.Frame):
         # print('fmts', fmts, type(fmts))
         # if fmts == 'ALL':
         #     fmts = ['png', 'pdf', 'eps']
-        fmts = ['png', 'pdf', 'eps']
+        fmts = ['png', 'pdf']
         return fmts
 
     def plot_image(self, frame, row, col):
