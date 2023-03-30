@@ -37,7 +37,7 @@ class App(PluginApp):
     """
     def __init__(self, parent, main_app, **kwargs):
         PluginApp.__init__(self, parent, main_app, **kwargs)
-        # parent is the frame "container" in App. contoller is the App class
+        # parent is the frame "container" in App. controller is the App class
         self.parent = parent
         self.main_app = main_app
         self.version = ''
@@ -189,14 +189,16 @@ class App(PluginApp):
         df = self.alg_session.get_xlist()
         return df
 
-    def load_data(self, update_kwargs, ctd_directory=None):
+    def load_data(self, update_kwargs,
+                  ctd_directory=None,
+                  lims_path=None):
         """
         :return:
         """
         self.alg_session.update_attributes(**update_kwargs)
         self.alg_session.update_year(self.alg_session.start_time.year)
         self.alg_session.initialize_statistic_handler()
-        self.alg_session.initialize_data_handler(ctd_directory=ctd_directory)
+        self.alg_session.initialize_data_handler(ctd_directory=ctd_directory, lims_path=lims_path)
         self.alg_session.load_data()
 
     def plot(self, figure_key, save_as_format=None):

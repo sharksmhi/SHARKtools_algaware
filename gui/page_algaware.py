@@ -4,26 +4,25 @@
 # Copyright (c) 2018 SMHI, Swedish Meteorological and Hydrological Institute
 # License: MIT License (see LICENSE.txt or http://opensource.org/licenses/mit).
 
-from PIL import Image, ImageTk
 import tkinter as tk
+
+from PIL import ImageTk
+
 try:
     import ttk
 except:
     from tkinter import ttk
 from tkinter import messagebox
 import sharkpylib.tklib.tkinter_widgets as tkw
-
-import gui as main_gui
-from plugins.SHARKtools_algaware import gui
-
-import os
-import time
-import pandas as pd
-# import ctdpy
-
+import pathlib
 
 import datetime
 import calendar
+
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 class BaseGUI(object):
@@ -66,8 +65,6 @@ class BaseGUI(object):
         elif previous_month:
             end_day = calendar.monthrange(self.previous_month.year, self.previous_month.month)[1]
             self.edate = self.previous_month.replace(day=end_day)
-
-        # print(self.edate)
 
     @property
     def sdate(self):
@@ -122,32 +119,25 @@ class PageAlgaware(BaseGUI, tk.Frame):
                          sticky='new')
         r = 0
         c = 0
-        # -----------------------------------------------------------------------
         self.labelframe_timeperiod = tk.LabelFrame(self, text='Time period selection')
         self.labelframe_timeperiod.grid(row=r, column=c, **self.grid)
-        # -----------------------------------------------------------------------
-        # r += 1
-        # # -----------------------------------------------------------------------
-        # self.labelframe_algaware_image = tk.LabelFrame(self, text='')
-        # self.labelframe_algaware_image.grid(row=r, column=c, **self.grid)
-        # # -----------------------------------------------------------------------
-        # r = 0
         c += 1
-        # -----------------------------------------------------------------------
+
         self.labelframe_ctd_directory = tk.LabelFrame(self, text='CTD-data directory')
         self.labelframe_ctd_directory.grid(row=r, column=c, **self.grid)
-        c += 2
-        # -----------------------------------------------------------------------
+
+        self.labelframe_lims_path = tk.LabelFrame(self, text='Use data from LIMS')
+        self.labelframe_lims_path.grid(row=r+1, column=c, **self.grid)
+        c += 1
+
         self.labelframe_load_data = tk.LabelFrame(self, text='Load data')
         self.labelframe_load_data.grid(row=r, column=c, **self.grid)
-        # -----------------------------------------------------------------------
         c += 1
-        # -----------------------------------------------------------------------
+
         self.labelframe_data = tk.LabelFrame(self, text='Available data')
-        self.labelframe_data.grid(row=r, column=c, **self.grid)
-        # -----------------------------------------------------------------------
+        self.labelframe_data.grid(row=r, column=c, rowspan=2, **self.grid)
         c += 1
-        # -----------------------------------------------------------------------
+
         self.labelframe_plot_figures = tk.LabelFrame(self, text='Plot figures')
         self.labelframe_plot_figures.grid(row=r, column=c, **self.grid)
 
@@ -155,15 +145,14 @@ class PageAlgaware(BaseGUI, tk.Frame):
 
         self.frame_grid = {
             'labelframe_timeperiod': {},
-            # 'labelframe_algaware_image': {},
             'labelframe_ctd_directory': {},
             'labelframe_load_data': {},
             'labelframe_data': {},
             'labelframe_plot_figures': {},
             }
         self._set_frame_timeperiod()
-        # self._set_labelframe_algaware_image()
         self._set_frame_ctd_directory()
+        self._set_frame_lims_path()
         self._set_frame_load_data()
         self._set_frame_data()
         self._set_frame_plot_figures()
@@ -219,18 +208,21 @@ class PageAlgaware(BaseGUI, tk.Frame):
         """
         frame = self.labelframe_ctd_directory
         r = 0
-        c = 2
+        c = 0
         self.ctd_directory = tkw.DirectoryWidget(frame,
                                                  include_default_button=False,
-                                                 row=r, column=c, columnspan=1, sticky='nw')
+                                                 row=r, column=c, sticky='nw')
 
-    # def _set_labelframe_algaware_image(self):
-    #     """
-    #     """
-    #     frame = self.labelframe_algaware_image
-    #     r = 0
-    #     c = 0
-    #     self.plot_image(frame, r, c)
+    def _set_frame_lims_path(self):
+        """
+        :return:
+        """
+        frame = self.labelframe_lims_path
+        r = 0
+        c = 0
+        self.lims_path = tkw.FilePathWidget(frame, row=r, column=c, sticky='nw')
+        r += 1
+        self.use_lims = tkw.CheckbuttonWidgetSingle(frame, name='Use this LIMS export', row=r)
 
     def _set_frame_load_data(self):
         """
@@ -354,8 +346,23 @@ class PageAlgaware(BaseGUI, tk.Frame):
         """
         time_settings = {'start_time': self.sdate,
                          'end_time': self.edate}
+
+        lims_path = self.lims_path.get_value().strip()
+        if not self.use_lims.get():
+            lims_path = None
+            logger.info('Data source is Archive')
+        elif self.use_lims.get() and not lims_path:
+            messagebox.showerror('Loading available data', 'No LIMS file shosen!')
+            return
+        elif self.use_lims.get() and not pathlib.Path(lims_path).exists():
+            messagebox.showerror('Loading available data', 'Invalid LIMS path!')
+            return
+        else:
+            logger.info('Data source is LIMS')
+
         self.parent_app.load_data(time_settings,
-                                  ctd_directory=self.ctd_directory.get_value())
+                                  ctd_directory=self.ctd_directory.get_value(),
+                                  lims_path=lims_path)
         self.set_entry_grid_values()
 
     def _plot(self):
