@@ -18,10 +18,6 @@ from plugins.plugin_app import PluginApp
 
 import algaware
 
-from sharkpylib.gismo.exceptions import *
-from core.exceptions import *
-
-import threading
 
 ALL_PAGES = dict()
 ALL_PAGES['PageAlgaware'] = gui.PageAlgaware
