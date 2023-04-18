@@ -19,17 +19,20 @@ import pathlib
 import datetime
 import calendar
 
+from . import components
+from ..saves import SaveComponents
+
 import logging
 
 
 logger = logging.getLogger(__name__)
 
 
-class BaseGUI(object):
+class BaseGUI:
     """
     """
     def __init__(self):
-        super().__init__()
+        self._save_obj = SaveComponents(key='algaware')
         self._sdate = 'None'
         self._edate = 'None'
         self.current_month = datetime.date.today().replace(day=1)
@@ -106,10 +109,17 @@ class PageAlgaware(BaseGUI, tk.Frame):
 
     def startup(self):
         self._set_frame()
+        self._save_obj.add_components(self.archive_root_directory)
+
+        self._save_obj.load(user=self.user.name)
 
     def update_page(self):
         # TODO: Update when changing user
         self.user = self.user_manager.user
+        self._save_obj.load(user=self.user.name)
+
+    def close(self):
+        self._save_obj.save(user=self.user.name)
 
     def _set_frame(self):
         padx = 5
@@ -123,12 +133,18 @@ class PageAlgaware(BaseGUI, tk.Frame):
         self.labelframe_timeperiod.grid(row=r, column=c, **self.grid)
         c += 1
 
-        self.labelframe_ctd_directory = tk.LabelFrame(self, text='CTD-data directory')
-        self.labelframe_ctd_directory.grid(row=r, column=c, **self.grid)
-
-        self.labelframe_lims_path = tk.LabelFrame(self, text='Use data from LIMS')
-        self.labelframe_lims_path.grid(row=r+1, column=c, **self.grid)
+        source_frame = tk.Frame(self)
+        source_frame.grid(row=r, column=c, **self.grid)
         c += 1
+
+        self.labelframe_archive_root_dir = tk.LabelFrame(source_frame, text='Archive root directory')
+        self.labelframe_archive_root_dir.grid(row=0, column=0, **self.grid)
+
+        self.labelframe_ctd_directory = tk.LabelFrame(source_frame, text='CTD-data directory')
+        self.labelframe_ctd_directory.grid(row=1, column=0, **self.grid)
+
+        self.labelframe_lims_path = tk.LabelFrame(source_frame, text='Use data from LIMS')
+        self.labelframe_lims_path.grid(row=2, column=0, **self.grid)
 
         self.labelframe_load_data = tk.LabelFrame(self, text='Load data')
         self.labelframe_load_data.grid(row=r, column=c, **self.grid)
@@ -151,6 +167,7 @@ class PageAlgaware(BaseGUI, tk.Frame):
             'labelframe_plot_figures': {},
             }
         self._set_frame_timeperiod()
+        self._set_frame_archive_root_directory()
         self._set_frame_ctd_directory()
         self._set_frame_lims_path()
         self._set_frame_load_data()
@@ -201,6 +218,14 @@ class PageAlgaware(BaseGUI, tk.Frame):
                                                    text='Use previous month',
                                                    command=self._set_previous_month)
         self.button_set_previous_month.grid(row=r, column=c, **self.grid)
+
+    def _set_frame_archive_root_directory(self):
+        frame = self.labelframe_archive_root_dir
+        r = 0
+        c = 0
+        self.archive_root_directory = components.DirectoryLabelText(frame, 'archive_root',
+                                      title='Rotkatalog för arkivet:',
+                                      row=r, column=c, sticky='nw')
 
     def _set_frame_ctd_directory(self):
         """
@@ -347,8 +372,12 @@ class PageAlgaware(BaseGUI, tk.Frame):
         time_settings = {'start_time': self.sdate,
                          'end_time': self.edate}
 
+        archive_root_dir = self.archive_root_directory.get().strip()
         lims_path = self.lims_path.get_value().strip()
         if not self.use_lims.get():
+            if not archive_root_dir:
+                messagebox.showerror('Loading available data', 'No archive root given!')
+                return
             lims_path = None
             logger.info('Data source is Archive')
         elif self.use_lims.get() and not lims_path:
@@ -359,10 +388,10 @@ class PageAlgaware(BaseGUI, tk.Frame):
             return
         else:
             logger.info('Data source is LIMS')
-
         self.parent_app.load_data(time_settings,
                                   ctd_directory=self.ctd_directory.get_value(),
-                                  lims_path=lims_path)
+                                  lims_path=lims_path,
+                                  archive_root_dir=archive_root_dir)
         self.set_entry_grid_values()
 
     def _plot(self):

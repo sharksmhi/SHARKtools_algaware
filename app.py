@@ -82,6 +82,14 @@ class App(PluginApp):
     def update_page(self):
         self.update_all()
 
+    def close(self):
+        for page_name, frame in self.frames.items():
+            if self.pages_started.get(page_name):
+                try:
+                    frame.close()
+                except:
+                    pass
+
     def _set_frame(self):
         self.frame_top = tk.Frame(self, bg='red')
 
@@ -187,14 +195,17 @@ class App(PluginApp):
 
     def load_data(self, update_kwargs,
                   ctd_directory=None,
-                  lims_path=None):
+                  lims_path=None,
+                  archive_root_dir=None):
         """
         :return:
         """
         self.alg_session.update_attributes(**update_kwargs)
         self.alg_session.update_year(self.alg_session.start_time.year)
         self.alg_session.initialize_statistic_handler()
-        self.alg_session.initialize_data_handler(ctd_directory=ctd_directory, lims_path=lims_path)
+        self.alg_session.initialize_data_handler(ctd_directory=ctd_directory,
+                                                 lims_path=lims_path,
+                                                 archive_root_dir=archive_root_dir)
         self.alg_session.load_data()
 
     def plot(self, figure_key, save_as_format=None):
